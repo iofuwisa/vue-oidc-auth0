@@ -1,5 +1,48 @@
 <script setup>
 import HelloWorld from '@/components/HelloWorld.vue';
+import { useTokensStore } from '@/stores/tokens.js';
+import { storeToRefs } from 'pinia';
+import auth0 from 'auth0-js';
+
+const tokensStore = useTokensStore();
+const { accessToken } = storeToRefs(tokensStore);
+
+const webAuth = new auth0.WebAuth({
+  domain: import.meta.env.VITE_OIDC_PROVIDER,
+  clientID: import.meta.env.VITE_CLIENT_ID,
+  redirectUri: `${window.location.protocol}//${window.location.host}/callback`,
+  audience: import.meta.env.VITE_API_IDENTIFIER,
+  scope: 'openid profile email read:to-dos delete:to-dos',
+  responseType: 'code',
+});
+
+const login = () => {
+  webAuth.login(
+    {
+      email: 'hogehoge@sample.com',
+      password: '12345678Ab-',
+      realm: import.meta.env.VITE_DB_CONNECTION,
+    },
+    function (err) {
+      if (err) return alert('Something went wrong: ' + err.message);
+      return alert('success signup without login!');
+    },
+  );
+};
+
+const signup = () => {
+  webAuth.signup(
+    {
+      email: 'hogehoge@sample.com',
+      password: '12345678Ab-',
+      connection: import.meta.env.VITE_DB_CONNECTION,
+    },
+    function (err) {
+      if (err) return alert('Something went wrong: ' + err.message);
+      return alert('success signup without login!');
+    },
+  );
+};
 </script>
 
 <template>
@@ -14,6 +57,14 @@ import HelloWorld from '@/components/HelloWorld.vue';
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
+
+      <div v-if="accessToken == null">
+        <button @click="login">login</button>
+        <button @click="signup">signup</button>
+      </div>
+      <div v-else>
+        <p>AccessToken: {{ accessToken }}</p>
+      </div>
 
       <nav>
         <RouterLink to="/"> Home </RouterLink>
